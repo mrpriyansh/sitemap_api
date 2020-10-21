@@ -7,7 +7,7 @@ router.get('/', (req, res)=>{
 })
 
 router.post('/scrap', async (req, res)=>{
-    const data = await sitemap(req, res);
+    const data = await sitemap(req.body.url);
     const res1 = {
         "url": "https://mika.house",
         "mapping": {

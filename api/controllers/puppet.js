@@ -3,14 +3,15 @@ const fs = require('fs');
 const {isWebUri} = require('valid-url');
 const { time } = require('console');
 const { link } = require('fs');
+const { throws } = require('assert');
 
 
 const conversion = link =>{
     let sz = link.length;
-    if(link.indexOf('#') !== -1){
-        sz=link.indexOf('#');
-        link = link.slice(0, sz);
-    }
+    // if(link.indexOf('#') !== -1){
+    //     sz=link.indexOf('#');
+    //     link = link.slice(0, sz);
+    // }
     if(link[sz-1]=='/'){
         sz--;
         link = link.slice(0, sz);
@@ -73,12 +74,11 @@ class TrieTree {
 }
 
 
-module.exports = async (req, res) => {
+module.exports = async (url, socket) => {
+    try{
     let results = [];
-    console.log(req.body);
     let front = 0;
     const allLinks=[];
-    const { url, domain } = req.body;
     console.log(url);
     results.push(url);
     const linkToTitle = {};
@@ -87,22 +87,30 @@ module.exports = async (req, res) => {
     // root.insert("abce", '2');
     // root.insert("abdf", '3');
     const browser = await puppet.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    const page = await browser.newPage();
     while(front!=results.length){
         const link = conversion(results[front]);
         front++;
+        socket.emit('update', results.length - front);
+        // throw 'err' ;
         if(!isWebUri(link) || link in linkToTitle) continue;
-        const page = await browser.newPage();
         await page.goto(link, {
             waitUntil: 'networkidle2'
         }).catch(e => void 0);
         console.log(link);
         linkToTitle[link] = await page.title();
         const res = await page.$$eval('a', as => as.map(a => a.href));
-        page.close();
         const data = res.filter(link => link.indexOf(url) !== -1);
-        data.forEach(d => results.push(d));
-        allLinks.push(sitemapBuilder(results));
+        data.forEach(d => {
+            if(!linkToTitle[d])
+                results.push(d);
+        });
+        // data.forEach(d => {
+        //     results.push(d);
+        // })
+        // allLinks.push(sitemapBuilder(results));
     }
+    page.close();
     browser.close();
     for(const key in linkToTitle) {
         root.insert(key, linkToTitle[key]);
@@ -114,6 +122,9 @@ module.exports = async (req, res) => {
     console.log(mapping);
     // return mapping;
     return {url: conversion(url), mapping, pages};
+    } catch {
+        socket.emit('update', -777);
+    }
 }
 
 let sitemapBuilder = (links) => {
