@@ -29,7 +29,7 @@ app.use((err, req, res, next) =>{
     handleError(err, req, res);
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 // app.listen(PORT, ()=>{
 //     console.log('Server is running ', PORT);
 // })
