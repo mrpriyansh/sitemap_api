@@ -92,7 +92,6 @@ module.exports = async (url, socket) => {
         const link = conversion(results[front]);
         front++;
         socket.emit('update', results.length - front);
-        // throw 'err' ;
         if(!isWebUri(link) || link in linkToTitle) continue;
         await page.goto(link, {
             waitUntil: 'networkidle2'
