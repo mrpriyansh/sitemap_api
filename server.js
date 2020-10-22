@@ -24,6 +24,9 @@ console.log('b');
 app.get('/', (req, res) => res.send('Server Up and running'));
 app.use('/api', require('./api/index.js'));
 
+app.all('*', (req, res) => {
+  res.status(404).json('Invalid Request');
+});
 app.use((err, req, res) => {
   handleError(err, req, res);
 });

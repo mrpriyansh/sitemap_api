@@ -269,7 +269,4 @@ router.get('/ss', async (req, res) => {
   res.json(data);
 });
 
-router.get('*', (req, res) => {
-  res.status(404).json('Invalid Request');
-});
 module.exports = router;
