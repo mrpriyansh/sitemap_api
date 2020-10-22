@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const sitemap = require('./controllers/puppet');
+const ss = require('./controllers/ss');
 
 router.get('/', (req, res)=>{
     res.send('API server Working fine!');
@@ -249,6 +250,12 @@ router.post('/scrap', async (req, res)=>{
         ]
     };
     res.send(data);
+});
+
+router.get('/ss', async(req, res) => {
+    const data = await ss(req.query.url);
+    console.log(data);
+    res.json(data);
 })
 
 module.exports = router;

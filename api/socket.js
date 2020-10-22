@@ -11,10 +11,10 @@ module.exports = function(io) {
             // return callback();
         });
 
-        socket.on('sendMessage', async(url)=>{
-            console.log(url);
+        socket.on('sendMessage', async(url, npages)=>{
+            console.log(url, npages);
             console.log('received request');
-            const results = await sitemap(url, socket);
+            const results = await sitemap(url, npages,  socket);
             socket.emit('recieved', results);
         });
     })

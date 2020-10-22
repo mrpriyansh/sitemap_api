@@ -3,15 +3,14 @@ const fs = require('fs');
 const {isWebUri} = require('valid-url');
 const { time } = require('console');
 const { link } = require('fs');
-const { throws } = require('assert');
 
 
 const conversion = link =>{
     let sz = link.length;
-    // if(link.indexOf('#') !== -1){
-    //     sz=link.indexOf('#');
-    //     link = link.slice(0, sz);
-    // }
+    if(link.indexOf('#') !== -1){
+        sz=link.indexOf('#');
+        link = link.slice(0, sz);
+    }
     if(link[sz-1]=='/'){
         sz--;
         link = link.slice(0, sz);
@@ -74,7 +73,7 @@ class TrieTree {
 }
 
 
-module.exports = async (url, socket) => {
+module.exports = async (url, npages,  socket) => {
     try{
     let results = [];
     let front = 0;
@@ -83,6 +82,7 @@ module.exports = async (url, socket) => {
     results.push(url);
     const linkToTitle = {};
     const root = new TrieTree();
+    let distinctPage = 0;
     // root.insert("ab", '1');
     // root.insert("abce", '2');
     // root.insert("abdf", '3');
@@ -92,12 +92,15 @@ module.exports = async (url, socket) => {
         const link = conversion(results[front]);
         front++;
         socket.emit('update', results.length - front);
+        if(distinctPage === +npages)
+            break;
         if(!isWebUri(link) || link in linkToTitle) continue;
         await page.goto(link, {
             waitUntil: 'networkidle2'
         }).catch(e => void 0);
-        console.log(link);
         linkToTitle[link] = await page.title();
+        console.log(link);
+        distinctPage++;
         const res = await page.$$eval('a', as => as.map(a => a.href));
         const data = res.filter(link => link.indexOf(url) !== -1);
         data.forEach(d => {
@@ -118,11 +121,12 @@ module.exports = async (url, socket) => {
     const mapping = {};
     const pages = [];
     root.getHeirarchy(root.getRoot(), "", "", "", "", mapping, pages);
-    console.log(mapping);
     // return mapping;
+    if(pages.length===1)
+        mapping[conversion(url)]={children:[], title:linkToTitle[conversion(url)], parent:""};
     return {url: conversion(url), mapping, pages};
-    } catch {
-
+    } catch(err){
+        console.log(err);
         socket.emit('update', -777);
     }
 }
